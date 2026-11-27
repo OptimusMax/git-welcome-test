@@ -10,7 +10,7 @@
 
 ## Встановлення
 
-Потрібні Python 3.10+ та [ffmpeg](https://ffmpeg.org/download.html) у `PATH`.
+Потрібні Python 3.10–3.13 (рекомендовано 3.12; для новіших версій ще немає потрібних бібліотек) та [ffmpeg](https://ffmpeg.org/download.html) у `PATH`.
 
 ```bash
 pip install -e .
