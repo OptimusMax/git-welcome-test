@@ -39,7 +39,7 @@ def dub_video(
 ) -> Path:
     video, output = Path(video), Path(output)
     if not video.exists():
-        raise FileNotFoundError(video)
+        raise FileNotFoundError(f"Файл не знайдено: {video}")
 
     tmp_ctx = tempfile.TemporaryDirectory(prefix="dubber_") if opts.work_dir is None else None
     work = Path(tmp_ctx.name) if tmp_ctx else Path(opts.work_dir)
@@ -54,6 +54,11 @@ def dub_video(
         if opts.translated_srt:
             log(f"[1/5] Беру готовий переклад: {opts.translated_srt}")
             segments = [Segment(s.start, s.end, s.text, s.text) for s in read_srt(opts.translated_srt)]
+        elif not opts.input_srt and output.with_suffix(".orig.srt").exists():
+            cached = output.with_suffix(".orig.srt")
+            log(f"[1/5] Знайдено вже розпізнаний текст, розпізнавання пропущено: {cached.name}")
+            log("      (щоб розпізнати заново, видаліть цей файл)")
+            segments = read_srt(cached)
         elif opts.input_srt:
             log(f"[1/5] Беру субтитри оригіналу: {opts.input_srt}")
             segments = read_srt(opts.input_srt)
