@@ -72,6 +72,16 @@ def main(argv: list[str] | None = None) -> int:
         return 130
     except Exception as e:
         print(f"Помилка: {e}", file=sys.stderr)
+        from .translate import TranslationBlocked
+
+        if isinstance(e, TranslationBlocked):
+            print(
+                "Вже перекладене збережено. Запустіть ту саму команду пізніше — "
+                "програма продовжить з місця зупинки.\n"
+                "Або перекладіть файл .orig.srt будь-яким способом і передайте його через "
+                "--translated-srt <файл>.",
+                file=sys.stderr,
+            )
         return 1
     return 0
 

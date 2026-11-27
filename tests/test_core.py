@@ -120,3 +120,42 @@ def test_batched_translator_falls_back_and_retries(monkeypatch):
         return f"<{text}>"
 
     assert translate.batched_translator(fake)(["a", "b"]) == ["<a>", "<b>"]
+
+
+def test_parse_gtx_response():
+    from dubber.translate import parse_gtx_response
+
+    data = [[["Привіт\n", "Hello\n", None], ["Світ", "World", None]], None, "en"]
+    assert parse_gtx_response(data) == "Привіт\nСвіт"
+
+
+def test_translate_segments_cache_resumes(tmp_path):
+    from dubber.translate import TranslationBlocked
+
+    segs = [Segment(i, i + 1, f"t{i}") for i in range(3)]
+    cache = tmp_path / "c.json"
+    calls = []
+
+    def flaky(batch):
+        calls.append(list(batch))
+        if len(calls) == 1:
+            return [t.upper() for t in batch]
+        raise TranslationBlocked("blocked")
+
+    from dubber import translate
+
+    # перша пачка проходить, друга блокується
+    orig = translate.MAX_CHARS
+    try:
+        translate.MAX_CHARS = 3
+        import functools
+        tb = functools.partial(translate._batches, max_chars=3)
+        translate._batches, saved = tb, translate._batches
+        with pytest.raises(TranslationBlocked):
+            translate_segments(segs, flaky, cache_path=cache)
+        out = translate_segments(segs, lambda b: [t.upper() for t in b], cache_path=cache)
+    finally:
+        translate._batches = saved
+        translate.MAX_CHARS = orig
+    assert [s.translation for s in out] == ["T0", "T1", "T2"]
+    assert calls[0] == ["t0"]

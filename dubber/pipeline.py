@@ -94,7 +94,10 @@ def dub_video(
 
                 log(f"[2/5] Переклад {source_lang or 'auto'} → {opts.target_lang}...")
                 segments = translate_segments(
-                    segments, google_translator(source_lang or "auto", opts.target_lang), log
+                    segments,
+                    google_translator(source_lang or "auto", opts.target_lang),
+                    log,
+                    cache_path=output.with_suffix(f".{opts.target_lang}.cache.json"),
                 )
         else:
             log("[2/5] Переклад пропущено")
