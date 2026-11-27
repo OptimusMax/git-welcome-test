@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -14,7 +15,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="dubber",
         description="Автоматичний дубляж відео: розпізнавання → переклад → озвучення → зведення.",
     )
-    p.add_argument("video", type=Path, help="вхідне відео")
+    p.add_argument("video", help="вхідне відео (файл або посилання YouTube тощо)")
     p.add_argument("-o", "--output", type=Path, help="вихідне відео (за замовч. <назва>.<мова>.mp4)")
     p.add_argument("-t", "--target", default="uk", help="мова дубляжу (uk, en, de, ...), за замовч. uk")
     p.add_argument("-s", "--source", default=None, help="мова оригіналу (за замовч. автовизначення)")
@@ -36,6 +37,15 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if re.match(r"https?://", args.video):
+        from .download import download_video
+
+        try:
+            args.video = download_video(args.video, Path(args.work_dir or "."))
+        except Exception as e:
+            print(f"Помилка завантаження: {e}", file=sys.stderr)
+            return 1
+    args.video = Path(args.video)
     output = args.output or args.video.with_name(f"{args.video.stem}.{args.target}{args.video.suffix or '.mp4'}")
     opts = DubOptions(
         target_lang=args.target,

@@ -22,6 +22,9 @@ pip install -e .
 # Дубляж українською (мова оригіналу визначається автоматично)
 dubber video.mp4
 
+# Одразу з YouTube (відео завантажиться автоматично)
+dubber "https://youtu.be/VIDEO_ID"
+
 # Жіночий голос, інший вихідний файл
 dubber video.mp4 -o video_ua.mp4 --female
 
