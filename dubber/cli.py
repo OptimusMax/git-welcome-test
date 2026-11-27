@@ -24,6 +24,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--rate", default="+0%", help="швидкість мовлення TTS, напр. +10%% або -5%%")
     p.add_argument("--model", default="small", help="модель whisper: tiny/base/small/medium/large-v3")
     p.add_argument("--device", default="auto", help="cpu / cuda / auto")
+    p.add_argument("--no-vad", action="store_true",
+                   help="не відсікати музику/шум перед розпізнаванням (якщо мову не знайдено)")
     p.add_argument("--max-speed", type=float, default=1.35, help="макс. прискорення фрази (за замовч. 1.35)")
     p.add_argument("--bg-volume", type=float, default=0.12,
                    help="гучність оригінального звуку під дубляжем, 0..1 (0 — тільки дубляж)")
@@ -55,6 +57,7 @@ def main(argv: list[str] | None = None) -> int:
         rate=args.rate,
         whisper_model=args.model,
         device=args.device,
+        vad=not args.no_vad,
         max_speed=args.max_speed,
         original_volume=args.bg_volume,
         keep_original_track=args.keep_original,

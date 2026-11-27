@@ -21,6 +21,7 @@ class DubOptions:
     rate: str = "+0%"
     whisper_model: str = "small"
     device: str = "auto"
+    vad: bool = True  # відсікати немовні фрагменти (музику, шум)
     max_speed: float = 1.35
     original_volume: float = 0.12  # гучність фону оригіналу (0 — вимкнути)
     keep_original_track: bool = False
@@ -61,13 +62,21 @@ def dub_video(
 
             log(f"[1/5] Розпізнавання мовлення (whisper '{opts.whisper_model}')...")
             wav = media.extract_audio(video, work / "source.wav")
-            segments, detected = transcribe(wav, opts.whisper_model, opts.source_lang, opts.device)
+            segments, detected = transcribe(
+                wav, opts.whisper_model, opts.source_lang, opts.device, opts.vad
+            )
             source_lang = source_lang or detected
             log(f"      мова оригіналу: {detected}, сегментів: {len(segments)}")
             write_srt(segments, output.with_suffix(".orig.srt"), use_translation=False)
 
         if not segments:
-            raise RuntimeError("Не знайдено жодної фрази для дубляжу")
+            hint = (
+                "Можливо, у відео немає мовлення (лише музика чи звуки). "
+                "Якщо мова там є, спробуйте ще раз із параметрами --no-vad --model medium"
+                if opts.vad and not (opts.input_srt or opts.translated_srt) else
+                "Перевірте, чи у відео є мовлення, або спробуйте --model medium"
+            )
+            raise RuntimeError(f"Не знайдено жодної фрази для дубляжу. {hint}")
 
         # 2. Переклад
         if not opts.translated_srt:
