@@ -88,3 +88,35 @@ def test_mux_end_to_end(tmp_path):
     assert streams.count("audio") == 2 and "video" in streams and "subtitle" in streams
     # load_audio з прискоренням коротшає вдвічі
     assert len(media.load_audio(dub, sr, tempo=2.0)) / sr == pytest.approx(1.5, abs=0.1)
+
+
+def test_batched_translator_single_request(monkeypatch):
+    from dubber import translate
+
+    monkeypatch.setattr(translate.time, "sleep", lambda s: None)
+    calls = []
+
+    def fake(text):
+        calls.append(text)
+        return text.upper()
+
+    out = translate.batched_translator(fake)(["one", "two  words", "three"])
+    assert out == ["ONE", "TWO WORDS", "THREE"]
+    assert len(calls) == 1
+
+
+def test_batched_translator_falls_back_and_retries(monkeypatch):
+    from dubber import translate
+
+    monkeypatch.setattr(translate.time, "sleep", lambda s: None)
+    state = {"fail": 1}
+
+    def fake(text):
+        if "\n" in text:
+            return text.replace("\n", " ")  # сервіс «з'їв» переноси
+        if state["fail"]:
+            state["fail"] -= 1
+            raise RuntimeError("too many requests")
+        return f"<{text}>"
+
+    assert translate.batched_translator(fake)(["a", "b"]) == ["<a>", "<b>"]

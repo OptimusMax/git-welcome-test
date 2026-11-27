@@ -88,7 +88,9 @@ def dub_video(
                 from .translate import google_translator, translate_segments
 
                 log(f"[2/5] Переклад {source_lang or 'auto'} → {opts.target_lang}...")
-                segments = translate_segments(segments, google_translator(source_lang or "auto", opts.target_lang))
+                segments = translate_segments(
+                    segments, google_translator(source_lang or "auto", opts.target_lang), log
+                )
         else:
             log("[2/5] Переклад пропущено")
         srt_path = output.with_suffix(f".{opts.target_lang}.srt")
